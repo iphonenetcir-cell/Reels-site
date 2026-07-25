@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Video Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: black;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            color: white;
+            touch-action: pan-y;
+        }
+
+        .app {
+            height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-top: 0;
+            touch-action: pan-y;
+            scroll-behavior: smooth;
+        }
+
+        .app::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
+            background: transparent;
+        }
+
+        .app {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        ::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
+
+        * {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+
+        .card {
+            height: 100vh;
+            position: relative;
+            scroll-snap-align: start;
+            overflow: hidden;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: black;
+            pointer-events: none;
+            display: block;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .video-wrapper video.portrait {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-wrapper video.landscape {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 5;
+            cursor: pointer;
+            touch-action: manipulation;
+            background: transparent;
+        }
+
+        .title-overlay {
+            position: absolute;
+            bottom: 80px;
+            left: 15px;
+            right: 15px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .title-overlay .category-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            background: rgba(255, 204, 0, 0.9);
+            color: #111;
+        }
+
+        .title-overlay h2 {
+            font-size: 16px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .play-pause-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 70px;
+            color: white;
+            text-shadow: 0 0 30px rgba(0,0,0,0.8);
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .play-pause-overlay.show {
+            opacity: 1;
+        }
+
+        .volume-btn {
+            position: absolute;
+            right: 15px;
+            bottom: 20px;
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            color: white;
+            font-size: 18px;
+            z-index: 15;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .volume-btn:active {
+            transform: scale(0.92);
+        }
+
+        .category-menu {
+            position: fixed;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 5px 8px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(15px);
+            border-radius: 25px 0 0 25px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-right: none;
+            width: 52px;
+            transition: all 0.3s ease;
+        }
+
+        .category-menu .menu-toggle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.05);
+            color: #888;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+            padding: 0;
+            margin-bottom: 3px;
+            touch-action: manipulation;
+        }
+
+        .category-menu .menu-toggle:active {
+            transform: scale(0.9);
+        }
+
+        .category-menu .menu-toggle.active {
+            background: rgba(255, 204, 0, 0.2);
+            color: #ffcc00;
+        }
+
+        .category-menu .cat-item {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: #888;
+            cursor: pointer;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 0;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+            line-height: 1;
+            gap: 0px;
+            touch-action: manipulation;
+        }
+
+        .category-menu.expanded .cat-item {
+            display: flex;
+        }
+
+        .category-menu .cat-item .cat-icon {
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        .category-menu .cat-item .cat-label {
+            font-size: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.6;
+            margin-top: 1px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .category-menu .cat-item .cat-label.shine-text {
+            animation: textShine 1.2s ease-in-out;
+            opacity: 1 !important;
+            color: #ffcc00 !important;
+        }
+
+        @keyframes textShine {
+            0% { text-shadow: 0 0 5px rgba(255, 204, 0, 0.2); transform: scale(1); color: #888; }
+            25% { text-shadow: 0 0 20px rgba(255, 204, 0, 0.8), 0 0 40px rgba(255, 204, 0, 0.4); transform: scale(1.2); color: #ffcc00; }
+            50% { text-shadow: 0 0 30px rgba(255, 204, 0, 1), 0 0 60px rgba(255, 204, 0, 0.5); transform: scale(1.3); color: #ffdd44; }
+            75% { text-shadow: 0 0 15px rgba(255, 204, 0, 0.5); transform: scale(1.1); color: #ffcc00; }
+            100% { text-shadow: 0 0 5px rgba(255, 204, 0, 0.2); transform: scale(1); color: #888; }
+        }
+
+        .category-menu .cat-item:active {
+            transform: scale(0.85);
+        }
+
+        .category-menu .cat-item.active {
+            border-color: #4fc3f7;
+            background: rgba(79, 195, 247, 0.15);
+            color: #4fc3f7;
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.2);
+            transform: scale(1.05);
+        }
+
+        .category-menu .cat-item.active .cat-label {
+            opacity: 1 !important;
+            color: #4fc3f7 !important;
+        }
+
+        .category-menu .cat-item[data-category="all"].active {
+            border-color: #4fc3f7;
+            background: rgba(79, 195, 247, 0.15);
+            color: #4fc3f7;
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.2);
+        }
+
+        .category-menu .cat-item[data-category="headlines"].active {
+            border-color: #ffcc00;
+            background: rgba(255, 204, 0, 0.15);
+            color: #ffcc00;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+        }
+        .category-menu .cat-item[data-category="headlines"].active .cat-label {
+            color: #ffcc00 !important;
+        }
+
+        .category-menu .cat-item[data-category="entertainment"].active {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.2);
+        }
+        .category-menu .cat-item[data-category="entertainment"].active .cat-label {
+            color: #ff6b6b !important;
+        }
+
+        .category-menu .cat-item[data-category="sports"].active {
+            border-color: #51cf66;
+            background: rgba(81, 207, 102, 0.15);
+            color: #51cf66;
+            box-shadow: 0 0 20px rgba(81, 207, 102, 0.2);
+        }
+        .category-menu .cat-item[data-category="sports"].active .cat-label {
+            color: #51cf66 !important;
+        }
+
+        .category-menu .cat-item[data-category="reels"].active {
+            border-color: #cc5de8;
+            background: rgba(204, 93, 232, 0.15);
+            color: #cc5de8;
+            box-shadow: 0 0 20px rgba(204, 93, 232, 0.2);
+        }
+        .category-menu .cat-item[data-category="reels"].active .cat-label {
+            color: #cc5de8 !important;
+        }
+
+        .menu-share-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2px solid rgba(220, 53, 69, 0.3);
+            background: linear-gradient(135deg, #dc3545, #c0392b);
+            color: white;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            padding: 0;
+            margin-top: 3px;
+            box-shadow: 0 2px 15px rgba(220, 53, 69, 0.3);
+            font-size: 18px;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+
+        .category-menu.expanded .menu-share-btn {
+            display: flex;
+        }
+
+        .menu-share-btn:active {
+            transform: scale(0.85);
+        }
+
+        .ad-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 99;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2px 0;
+            min-height: 52px;
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255,215,0,0.05);
+            transition: transform 0.4s ease;
+        }
+
+        .ad-top.hidden {
+            transform: translateY(-100%);
+        }
+
+        .ad-top iframe {
+            max-width: 320px;
+            height: 50px;
+            border: none;
+        }
+
+        .ad-close {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            background: rgba(255, 59, 48, 0.85);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            transition: 0.2s;
+            touch-action: manipulation;
+        }
+
+        .ad-close:active {
+            transform: scale(0.85);
+        }
+
+        .ad-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 99;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2px 0;
+            min-height: 62px;
+            backdrop-filter: blur(8px);
+            border-top: 1px solid rgba(255,215,0,0.05);
+            transition: transform 0.4s ease;
+        }
+
+        .ad-footer.hidden {
+            transform: translateY(100%);
+        }
+
+        .ad-footer iframe {
+            max-width: 468px;
+            height: 60px;
+            border: none;
+        }
+
+        .ad-footer .ad-close {
+            top: 2px;
+            right: 4px;
+        }
+
+        .social-bar {
+            position: fixed;
+            bottom: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 98;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 8px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            max-width: 92%;
+            overflow: hidden;
+            min-height: 40px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        .social-bar iframe {
+            max-width: 100%;
+            border: none;
+            height: 30px;
+            background: transparent;
+        }
+
+        .shared-indicator {
+            position: fixed;
+            top: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 97;
+            background: rgba(255, 204, 0, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #ffcc00;
+            border: 1px solid rgba(255, 204, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        .shared-indicator.show {
+            opacity: 1;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .refresh-timer {
+            position: fixed;
+            bottom: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px);
+            padding: 2px 12px;
+            border-radius: 15px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            pointer-events: none;
+            transition: opacity 0.5s;
+            opacity: 0;
+        }
+
+        .refresh-timer.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            .category-menu {
+                right: 4px;
+                padding: 8px 4px 6px;
+                width: 46px;
+                gap: 4px;
+            }
+            .category-menu .cat-item,
+            .category-menu .menu-toggle,
+            .menu-share-btn {
+                width: 34px;
+                height: 34px;
+            }
+            .category-menu .cat-item .cat-icon {
+                font-size: 11px;
+            }
+            .category-menu .cat-item .cat-label {
+                font-size: 4.5px;
+                letter-spacing: 0.3px;
+            }
+            .category-menu .menu-toggle {
+                font-size: 14px;
+            }
+            .menu-share-btn {
+                font-size: 15px;
+            }
+            .title-overlay {
+                bottom: 70px;
+                left: 12px;
+                right: 12px;
+            }
+            .title-overlay h2 {
+                font-size: 14px;
+            }
+            .play-pause-overlay {
+                width: 60px;
+                height: 60px;
+                font-size: 40px;
+            }
+            .volume-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 15px;
+                right: 10px;
+                bottom: 12px;
+            }
+            .ad-top iframe {
+                max-width: 300px;
+                height: 50px;
+            }
+            .ad-footer iframe {
+                max-width: 320px;
+                height: 50px;
+            }
+            .social-bar {
+                bottom: 55px;
+                padding: 6px 14px;
+                min-height: 34px;
+            }
+            .social-bar iframe {
+                height: 26px;
+            }
+            .ad-close {
+                width: 18px;
+                height: 18px;
+                font-size: 10px;
+                top: 1px;
+                right: 3px;
+            }
+            .shared-indicator {
+                top: 50px;
+                font-size: 10px;
+                padding: 3px 12px;
+            }
+            .refresh-timer {
+                bottom: 95px;
+                font-size: 9px;
+                padding: 2px 10px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .category-menu {
+                width: 40px;
+                padding: 6px 3px 4px;
+                gap: 3px;
+            }
+            .category-menu .cat-item,
+            .category-menu .menu-toggle,
+            .menu-share-btn {
+                width: 30px;
+                height: 30px;
+            }
+            .category-menu .cat-item .cat-icon {
+                font-size: 10px;
+            }
+            .category-menu .cat-item .cat-label {
+                font-size: 4px;
+            }
+            .category-menu .menu-toggle {
+                font-size: 12px;
+            }
+            .menu-share-btn {
+                font-size: 13px;
+            }
+            .title-overlay {
+                bottom: 60px;
+                left: 10px;
+                right: 10px;
+            }
+            .title-overlay h2 {
+                font-size: 12px;
+            }
+            .social-bar {
+                bottom: 50px;
+                padding: 4px 10px;
+                min-height: 30px;
+            }
+            .social-bar iframe {
+                height: 22px;
+            }
+            .refresh-timer {
+                bottom: 85px;
+                font-size: 8px;
+                padding: 2px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="ad-top" id="topAd">
+    <button class="ad-close" onclick="closeAd('topAd')">✕</button>
+    <script>
+        atOptions = {
+            'key' : 'f964d8a42020bebd6098ca3d28573ca6',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+        };
+    </script>
+    <script src="https://www.highperformanceformat.com/f964d8a42020bebd6098ca3d28573ca6/invoke.js"></script>
+</div>
+
+<div class="social-bar" id="socialBar">
+    <script src="https://pl30207727.effectivecpmnetwork.com/05/bf/5e/05bf5ece7ee04f22b9b15f68e095c904.js"></script>
+</div>
+
+<div class="shared-indicator" id="sharedIndicator">🔗 Playing Shared Video</div>
+
+<div class="refresh-timer" id="refreshTimer"></div>
+
+<div class="category-menu" id="categoryMenu">
+    <button class="menu-toggle" onclick="toggleMenu()" id="menuToggle">☰</button>
+    
+    <button class="cat-item active" data-category="all" onclick="selectCategory('all')" title="All">
+        <span class="cat-icon">📱</span>
+        <span class="cat-label" id="label-all">All</span>
+    </button>
+    <button class="cat-item" data-category="headlines" onclick="selectCategory('headlines')" title="Headlines">
+        <span class="cat-icon">🌍</span>
+        <span class="cat-label" id="label-headlines">News</span>
+    </button>
+    <button class="cat-item" data-category="entertainment" onclick="selectCategory('entertainment')" title="Entertainment">
+        <span class="cat-icon">🎭</span>
+        <span class="cat-label" id="label-entertainment">Enter</span>
+    </button>
+    <button class="cat-item" data-category="sports" onclick="selectCategory('sports')" title="Sports">
+        <span class="cat-icon">⚽</span>
+        <span class="cat-label" id="label-sports">Sport</span>
+    </button>
+    <button class="cat-item" data-category="reels" onclick="selectCategory('reels')" title="Reels">
+        <span class="cat-icon">🎬</span>
+        <span class="cat-label" id="label-reels">Reels</span>
+    </button>
+
+    <button class="menu-share-btn" onclick="shareCurrentVideo()" title="Share">
+        ➤
+    </button>
+</div>
+
+<div class="app" id="app">
+    <div class="loading">🎬 Loading videos...</div>
+</div>
+
+<div class="ad-footer" id="footerAd">
+    <button class="ad-close" onclick="closeAd('footerAd')">✕</button>
+    <script>
+        atOptions = {
+            'key' : '50e42881f81704264e0eaf22a5788a06',
+            'format' : 'iframe',
+            'height' : 60,
+            'width' : 468,
+            'params' : {}
+        };
+    </script>
+    <script src="https://www.highperformanceformat.com/50e42881f81704264e0eaf22a5788a06/invoke.js"></script>
+</div>
+
+<script>
+    // ============================================
+    // FRONTEND - NO API KEYS HERE!
+    // All Firebase calls go through Netlify Functions
+    // ============================================
+    
+    const appContainer = document.getElementById('app');
+    let currentCategory = 'all';
+    let allVideos = [];
+    let shuffledVideos = [];
+    let shineInterval = null;
+    let shineIndex = 0;
+    let currentVideoId = null;
+    let isSharedMode = false;
+    let sharedVideoId = null;
+    let isInitialLoad = true;
+    let currentPlayingIndex = -1;
+    let videoDuration = 0;
+    let isVideoEnded = false;
+    let refreshCheckInterval = null;
+    let isLongVideo = false;
+
+    // ============================================
+    // API CALLS TO NETLIFY FUNCTIONS
+    // ============================================
+    const API_BASE = '/.netlify/functions';
+
+    async function fetchVideosFromAPI() {
+        try {
+            const response = await fetch(`${API_BASE}/getVideos`);
+            if (!response.ok) throw new Error('Failed to fetch videos');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching videos:', error);
+            return [];
+        }
+    }
+
+    // ============================================
+    // AD CLOSE
+    // ============================================
+    function closeAd(adId) {
+        const adElement = document.getElementById(adId);
+        if (adElement) {
+            adElement.classList.add('hidden');
+            setTimeout(() => {
+                adElement.classList.remove('hidden');
+            }, 10000);
+        }
+    }
+    window.closeAd = closeAd;
+
+    // ============================================
+    // SHUFFLE ARRAY
+    // ============================================
+    function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    // ============================================
+    // GET SHUFFLED VIDEOS
+    // ============================================
+    function getShuffledVideos(category) {
+        let filtered = category === 'all' ? allVideos : allVideos.filter(v => v.category === category);
+        return shuffleArray(filtered);
+    }
+
+    // ============================================
+    // LOAD VIDEOS
+    // ============================================
+    async function loadVideos() {
+        try {
+            const videos = await fetchVideosFromAPI();
+            allVideos = videos;
+            
+            if (isSharedMode && sharedVideoId) {
+                const sharedVideo = allVideos.find(v => v.uniqueId === sharedVideoId);
+                if (sharedVideo) {
+                    shuffledVideos = [sharedVideo];
+                    renderVideos();
+                    updateActiveCategory('all');
+                    
+                    const indicator = document.getElementById('sharedIndicator');
+                    if (indicator) {
+                        indicator.textContent = `🔗 Playing: ${sharedVideo.title}`;
+                        indicator.classList.add('show');
+                    }
+                    
+                    setTimeout(() => {
+                        if (indicator) {
+                            indicator.classList.remove('show');
+                        }
+                        isSharedMode = false;
+                        sharedVideoId = null;
+                        if (window.history && window.history.pushState) {
+                            const newUrl = window.location.origin + window.location.pathname;
+                            window.history.pushState({}, '', newUrl);
+                        }
+                        loadCategory('all');
+                    }, 5000);
+                    
+                    return;
+                }
+            }
+            
+            if (isInitialLoad) {
+                isInitialLoad = false;
+                loadCategory('all');
+            } else {
+                loadCategory(currentCategory);
+            }
+        } catch (error) {
+            console.error('Error loading videos:', error);
+            appContainer.innerHTML = `
+                <div style="display:flex; justify-content:center; align-items:center; height:100vh; color:#ff6b6b; text-align:center; flex-direction:column; padding:20px;">
+                    <h2 style="font-size:28px; margin-bottom:10px;">⚠️</h2>
+                    <p>Failed to load videos. Please try again.</p>
+                    <button onclick="loadVideos()" style="margin-top:20px; padding:10px 30px; background:#4fc3f7; border:none; border-radius:10px; color:white; font-size:16px; cursor:pointer;">Retry</button>
+                </div>
+            `;
+        }
+    }
+
+    // ============================================
+    // LOAD CATEGORY
+    // ============================================
+    function loadCategory(category) {
+        currentCategory = category;
+        shuffledVideos = getShuffledVideos(category);
+        renderVideos();
+        updateActiveCategory(category);
+    }
+
+    // ============================================
+    // RENDER VIDEOS
+    // ============================================
+    function renderVideos() {
+        appContainer.innerHTML = '';
+
+        if (shuffledVideos.length === 0) {
+            appContainer.innerHTML = `
+                <div style="display:flex; justify-content:center; align-items:center; height:100vh; color:#666; text-align:center; flex-direction:column; padding:20px;">
+                    <h2 style="font-size:28px; margin-bottom:10px;">📭</h2>
+                    <p>No videos in this category</p>
+                </div>
+            `;
+            return;
+        }
+
+        shuffledVideos.forEach((data, index) => {
+            const safeTitle = escapeHTML(data.title || 'Untitled');
+            
+            const categoryEmoji = data.category === 'headlines' ? '🌍' : 
+                                 data.category === 'entertainment' ? '🎭' :
+                                 data.category === 'sports' ? '⚽' : '🎬';
+            const categoryName = data.category.charAt(0).toUpperCase() + data.category.slice(1);
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = `card${index}`;
+            card.dataset.uniqueId = data.uniqueId;
+            card.dataset.index = index;
+
+            card.innerHTML = `
+                <div class="video-wrapper" id="wrapper${index}">
+                    <video
+                        id="video${index}"
+                        src="${data.url || ''}"
+                        loop
+                        playsinline
+                        webkit-playsinline
+                        preload="metadata"
+                        crossorigin="anonymous"
+                    ></video>
+                    <div class="video-overlay" id="overlayBtn${index}"></div>
+                    <div class="title-overlay">
+                        <span class="category-badge">${categoryEmoji} ${categoryName}</span>
+                        <h2>${safeTitle}</h2>
+                    </div>
+                    <div class="play-pause-overlay" id="playPause${index}">▶</div>
+                    <button class="volume-btn" id="volBtn${index}">🔊</button>
+                </div>
+            `;
+
+            appContainer.appendChild(card);
+        });
+
+        if (shuffledVideos.length > 0 && shuffledVideos[0].uniqueId) {
+            currentVideoId = shuffledVideos[0].uniqueId;
+        }
+
+        setTimeout(() => setupVideos(), 300);
+    }
+
+    // ============================================
+    // DETECT VIDEO ASPECT RATIO
+    // ============================================
+    function detectAspectRatio(video) {
+        return new Promise((resolve) => {
+            const checkRatio = () => {
+                if (video.videoWidth > 0 && video.videoHeight > 0) {
+                    const ratio = video.videoWidth / video.videoHeight;
+                    resolve(ratio);
+                } else {
+                    video.addEventListener('loadedmetadata', function() {
+                        const ratio = this.videoWidth / this.videoHeight;
+                        resolve(ratio);
+                    }, { once: true });
+                    setTimeout(() => {
+                        if (video.videoWidth > 0 && video.videoHeight > 0) {
+                            const ratio = video.videoWidth / video.videoHeight;
+                            resolve(ratio);
+                        } else {
+                            resolve(1.78);
+                        }
+                    }, 3000);
+                }
+            };
+            checkRatio();
+        });
+    }
+
+    // ============================================
+    // GET VIDEO DURATION
+    // ============================================
+    function getVideoDuration(video) {
+        return new Promise((resolve) => {
+            if (video.duration && video.duration > 0) {
+                resolve(video.duration);
+            } else {
+                video.addEventListener('loadedmetadata', function() {
+                    resolve(video.duration);
+                }, { once: true });
+                setTimeout(() => {
+                    if (video.duration && video.duration > 0) {
+                        resolve(video.duration);
+                    } else {
+                        resolve(0);
+                    }
+                }, 3000);
+            }
+        });
+    }
+
+    // ============================================
+    // SETUP VIDEOS
+    // ============================================
+    function setupVideos() {
+        const videos = document.querySelectorAll('video');
+
+        if (videos.length === 0) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                const video = entry.target;
+                const index = Array.from(videos).indexOf(video);
+                const card = document.getElementById(`card${index}`);
+
+                if (entry.isIntersecting) {
+                    videos.forEach((v, i) => {
+                        if (i !== index) {
+                            v.pause();
+                            v.muted = true;
+                        }
+                    });
+
+                    video.muted = false;
+                    video.play().catch(() => {});
+                    
+                    currentPlayingIndex = index;
+                    isVideoEnded = false;
+                    
+                    detectAspectRatio(video).then(ratio => {
+                        if (ratio > 1.5) {
+                            video.classList.add('landscape');
+                            video.classList.remove('portrait');
+                        } else {
+                            video.classList.add('portrait');
+                            video.classList.remove('landscape');
+                        }
+                    });
+                    
+                    getVideoDuration(video).then(duration => {
+                        videoDuration = duration;
+                        updateRefreshTimerForVideo(duration);
+                    });
+                    
+                    if (card && card.dataset.uniqueId) {
+                        currentVideoId = card.dataset.uniqueId;
+                    }
+                } else {
+                    video.pause();
+                    video.muted = true;
+                }
+            });
+        }, { threshold: 0.6 });
+
+        videos.forEach((video, index) => {
+            observer.observe(video);
+            video.muted = true;
+
+            detectAspectRatio(video).then(ratio => {
+                if (ratio > 1.5) {
+                    video.classList.add('landscape');
+                } else {
+                    video.classList.add('portrait');
+                }
+            });
+
+            video.addEventListener('loadedmetadata', function() {
+                if (index === 0) {
+                    getVideoDuration(video).then(duration => {
+                        videoDuration = duration;
+                        updateRefreshTimerForVideo(duration);
+                    });
+                }
+            });
+
+            const overlay = document.getElementById(`overlayBtn${index}`);
+            const playPause = document.getElementById(`playPause${index}`);
+            let overlayTimeout = null;
+
+            video.addEventListener('pause', () => {
+                if (playPause) {
+                    playPause.textContent = '⏸';
+                    playPause.classList.add('show');
+                    clearTimeout(overlayTimeout);
+                    overlayTimeout = setTimeout(() => {
+                        playPause.classList.remove('show');
+                    }, 600);
+                }
+            });
+
+            video.addEventListener('play', () => {
+                if (playPause) {
+                    playPause.textContent = '▶';
+                    playPause.classList.add('show');
+                    clearTimeout(overlayTimeout);
+                    overlayTimeout = setTimeout(() => {
+                        playPause.classList.remove('show');
+                    }, 400);
+                }
+            });
+
+            video.addEventListener('ended', () => {
+                isVideoEnded = true;
+                setTimeout(() => {
+                    if (video && video.paused) {
+                        video.currentTime = 0;
+                        const rect = video.getBoundingClientRect();
+                        const isVisible = rect.top >= -100 && rect.top <= window.innerHeight * 0.6;
+                        if (isVisible) {
+                            video.play().catch(() => {});
+                        }
+                    }
+                }, 2000);
+            });
+
+            if (overlay) {
+                overlay.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (video.paused) {
+                        videos.forEach((v, i) => {
+                            if (i !== index) {
+                                v.pause();
+                                v.muted = true;
+                            }
+                        });
+                        video.muted = false;
+                        video.play().catch(() => {});
+                    } else {
+                        video.pause();
+                        video.muted = true;
+                    }
+                });
+
+                overlay.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (video.paused) {
+                        videos.forEach((v, i) => {
+                            if (i !== index) {
+                                v.pause();
+                                v.muted = true;
+                            }
+                        });
+                        video.muted = false;
+                        video.play().catch(() => {});
+                    } else {
+                        video.pause();
+                        video.muted = true;
+                    }
+                });
+            }
+
+            const volBtn = document.getElementById(`volBtn${index}`);
+            if (volBtn) {
+                volBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleMute(index);
+                });
+                volBtn.addEventListener('touchstart', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    toggleMute(index);
+                }, { passive: false });
+            }
+        });
+
+        setTimeout(() => {
+            const firstVideo = document.querySelector('video');
+            if (firstVideo && firstVideo.paused) {
+                const videos = document.querySelectorAll('video');
+                videos.forEach((v, i) => {
+                    if (i !== 0) {
+                        v.pause();
+                        v.muted = true;
+                    }
+                });
+                firstVideo.muted = false;
+                firstVideo.play().catch(() => {});
+                
+                detectAspectRatio(firstVideo).then(ratio => {
+                    if (ratio > 1.5) {
+                        firstVideo.classList.add('landscape');
+                    } else {
+                        firstVideo.classList.add('portrait');
+                    }
+                });
+                
+                getVideoDuration(firstVideo).then(duration => {
+                    videoDuration = duration;
+                    updateRefreshTimerForVideo(duration);
+                });
+            }
+        }, 500);
+    }
+
+    // ============================================
+    // UPDATE REFRESH TIMER
+    // ============================================
+    function updateRefreshTimerForVideo(duration) {
+        const timerEl = document.getElementById('refreshTimer');
+        if (!timerEl) return;
+        
+        if (refreshCheckInterval) {
+            clearInterval(refreshCheckInterval);
+            refreshCheckInterval = null;
+        }
+        
+        if (!duration || duration === 0) {
+            timerEl.classList.remove('show');
+            return;
+        }
+        
+        if (duration > 600) {
+            isLongVideo = true;
+            timerEl.textContent = '🎬 Long video - no auto refresh';
+            timerEl.classList.add('show');
+            return;
+        }
+        
+        isLongVideo = false;
+        
+        let refreshTime = 300;
+        let remaining = refreshTime;
+        timerEl.textContent = `🔄 Refresh in ${Math.floor(remaining/60)}m ${remaining%60}s`;
+        timerEl.classList.add('show');
+        
+        refreshCheckInterval = setInterval(() => {
+            if (isVideoEnded) {
+                timerEl.textContent = '🔄 Refreshing...';
+                setTimeout(() => {
+                    refreshContent();
+                }, 2000);
+                clearInterval(refreshCheckInterval);
+                refreshCheckInterval = null;
+                return;
+            }
+            
+            remaining--;
+            if (remaining <= 0) {
+                timerEl.textContent = '🔄 Refreshing...';
+                setTimeout(() => {
+                    refreshContent();
+                }, 1000);
+                clearInterval(refreshCheckInterval);
+                refreshCheckInterval = null;
+            } else {
+                timerEl.textContent = `🔄 Refresh in ${Math.floor(remaining/60)}m ${remaining%60}s`;
+            }
+        }, 1000);
+    }
+
+    // ============================================
+    // CATEGORY SELECTION
+    // ============================================
+    function selectCategory(category) {
+        if (category === currentCategory) return;
+        
+        document.querySelectorAll('.cat-item').forEach(el => {
+            el.classList.remove('shine');
+        });
+        
+        isSharedMode = false;
+        sharedVideoId = null;
+        
+        if (window.history && window.history.pushState) {
+            const newUrl = window.location.origin + window.location.pathname;
+            window.history.pushState({}, '', newUrl);
+        }
+        
+        const indicator = document.getElementById('sharedIndicator');
+        if (indicator) {
+            indicator.classList.remove('show');
+        }
+        
+        if (refreshCheckInterval) {
+            clearInterval(refreshCheckInterval);
+            refreshCheckInterval = null;
+        }
+        const timerEl = document.getElementById('refreshTimer');
+        if (timerEl) {
+            timerEl.classList.remove('show');
+        }
+        
+        loadCategory(category);
+        
+        document.querySelectorAll('.cat-item').forEach(el => {
+            if (el.dataset.category === category) {
+                el.classList.add('shine');
+                setTimeout(() => el.classList.remove('shine'), 1500);
+            }
+        });
+    }
+    window.selectCategory = selectCategory;
+
+    function updateActiveCategory(category) {
+        document.querySelectorAll('.cat-item').forEach(el => {
+            el.classList.remove('active');
+            if (el.dataset.category === category) {
+                el.classList.add('active');
+            }
+        });
+    }
+
+    // ============================================
+    // AUTO SHINE
+    // ============================================
+    function startAutoShine() {
+        clearInterval(shineInterval);
+        shineIndex = 0;
+        
+        shineInterval = setInterval(() => {
+            document.querySelectorAll('.cat-label').forEach(el => {
+                el.classList.remove('shine-text');
+            });
+            
+            const labels = document.querySelectorAll('.cat-label');
+            if (labels.length > 0) {
+                const idx = shineIndex % labels.length;
+                labels[idx].classList.add('shine-text');
+                
+                const parent = labels[idx].closest('.cat-item');
+                if (parent) {
+                    parent.classList.add('shine');
+                    setTimeout(() => parent.classList.remove('shine'), 1500);
+                }
+                
+                shineIndex++;
+            }
+        }, 3000);
+    }
+
+    // ============================================
+    // TOGGLE MENU
+    // ============================================
+    let menuExpanded = false;
+
+    function toggleMenu() {
+        const menu = document.getElementById('categoryMenu');
+        const toggle = document.getElementById('menuToggle');
+        
+        menuExpanded = !menuExpanded;
+        
+        if (menuExpanded) {
+            menu.classList.add('expanded');
+            toggle.textContent = '✕';
+            toggle.classList.add('active');
+        } else {
+            menu.classList.remove('expanded');
+            toggle.textContent = '☰';
+            toggle.classList.remove('active');
+        }
+    }
+    window.toggleMenu = toggleMenu;
+
+    // ============================================
+    // SHARE CURRENT VIDEO
+    // ============================================
+    function shareCurrentVideo() {
+        const cards = document.querySelectorAll('.card');
+        let visibleCard = null;
+        
+        cards.forEach(card => {
+            const rect = card.getBoundingClientRect();
+            const isVisible = rect.top >= -100 && rect.top <= window.innerHeight * 0.6;
+            if (isVisible) {
+                visibleCard = card;
+            }
+        });
+        
+        if (!visibleCard && cards.length > 0) {
+            visibleCard = cards[0];
+        }
+        
+        let uniqueId = null;
+        if (visibleCard) {
+            uniqueId = visibleCard.dataset.uniqueId;
+        }
+        
+        if (!uniqueId) {
+            uniqueId = currentVideoId;
+        }
+        
+        if (!uniqueId && shuffledVideos.length > 0) {
+            uniqueId = shuffledVideos[0].uniqueId;
+        }
+        
+        if (!uniqueId) {
+            alert('⚠️ No video to share. Please wait for videos to load.');
+            return;
+        }
+        
+        const domain = window.location.origin;
+        const shareUrl = `${domain}/?video=${uniqueId}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check this video!',
+                text: 'Watch this amazing video',
+                url: shareUrl
+            }).catch((err) => {
+                if (err.name !== 'AbortError') {
+                    copyToClipboard(shareUrl);
+                }
+            });
+        } else {
+            copyToClipboard(shareUrl);
+        }
+    }
+    window.shareCurrentVideo = shareCurrentVideo;
+
+    function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Link copied to clipboard!\n\n' + text);
+            }).catch(() => {
+                fallbackCopy(text);
+            });
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        try {
+            document.execCommand('copy');
+            alert('✅ Link copied to clipboard!\n\n' + text);
+        } catch (e) {
+            alert('📋 Copy this link manually:\n\n' + text);
+        }
+        document.body.removeChild(input);
+    }
+
+    // ============================================
+    // TOGGLE MUTE
+    // ============================================
+    function toggleMute(index) {
+        const video = document.getElementById(`video${index}`);
+        const btn = document.getElementById(`volBtn${index}`);
+        if (!video || !btn) return;
+
+        video.muted = !video.muted;
+        btn.textContent = video.muted ? '🔇' : '🔊';
+        
+        if (!video.muted) {
+            const videos = document.querySelectorAll('video');
+            videos.forEach((v, i) => {
+                if (i !== index) {
+                    v.pause();
+                    v.muted = true;
+                }
+            });
+        }
+
+        btn.style.transform = 'scale(0.92)';
+        setTimeout(() => { btn.style.transform = ''; }, 150);
+    }
+    window.toggleMute = toggleMute;
+
+    // ============================================
+    // REFRESH CONTENT
+    // ============================================
+    function refreshContent() {
+        if (isSharedMode) return;
+        if (isLongVideo) return;
+        
+        isVideoEnded = false;
+        
+        if (refreshCheckInterval) {
+            clearInterval(refreshCheckInterval);
+            refreshCheckInterval = null;
+        }
+        const timerEl = document.getElementById('refreshTimer');
+        if (timerEl) {
+            timerEl.classList.remove('show');
+        }
+        
+        shuffledVideos = getShuffledVideos(currentCategory);
+        renderVideos();
+    }
+    window.refreshContent = refreshContent;
+
+    // ============================================
+    // ESCAPE HTML
+    // ============================================
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            if (m === '"') return '&quot;';
+            return m;
+        });
+    }
+
+    // ============================================
+    // CHECK SHARED VIDEO
+    // ============================================
+    function checkSharedVideo() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const videoId = urlParams.get('video');
+        
+        if (videoId) {
+            isSharedMode = true;
+            sharedVideoId = videoId;
+            return true;
+        }
+        return false;
+    }
+
+    // ============================================
+    // SCROLL CONTROL
+    // ============================================
+    const app = document.getElementById('app');
+    let scrollTimeout = null;
+
+    if (app) {
+        app.addEventListener('scroll', function() {
+            clearTimeout(scrollTimeout);
+        }, { passive: true });
+
+        let scrollSnapTimer = null;
+        app.addEventListener('scroll', function() {
+            clearTimeout(scrollSnapTimer);
+            scrollSnapTimer = setTimeout(() => {
+                const cards = document.querySelectorAll('.card');
+                let nearestCard = null;
+                let nearestDist = Infinity;
+                
+                cards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const dist = Math.abs(rect.top);
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearestCard = card;
+                    }
+                });
+                
+                if (nearestCard && nearestDist < 200) {
+                    nearestCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 200);
+        }, { passive: true });
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+    const hasShared = checkSharedVideo();
+    
+    if (hasShared) {
+        // First load all videos, then find shared one
+        fetchVideosFromAPI().then(videos => {
+            allVideos = videos;
+            const sharedVideo = allVideos.find(v => v.uniqueId === sharedVideoId);
+            if (sharedVideo) {
+                shuffledVideos = [sharedVideo];
+                renderVideos();
+                updateActiveCategory('all');
+                
+                const indicator = document.getElementById('sharedIndicator');
+                if (indicator) {
+                    indicator.textContent = `🔗 Playing: ${sharedVideo.title}`;
+                    indicator.classList.add('show');
+                }
+                
+                setTimeout(() => {
+                    isSharedMode = false;
+                    sharedVideoId = null;
+                    
+                    if (window.history && window.history.pushState) {
+                        const newUrl = window.location.origin + window.location.pathname;
+                        window.history.pushState({}, '', newUrl);
+                    }
+                    
+                    if (indicator) {
+                        indicator.classList.remove('show');
+                    }
+                    
+                    loadCategory('all');
+                }, 5000);
+            } else {
+                document.querySelector('.cat-item[data-category="all"]').classList.add('active');
+                loadVideos();
+            }
+        });
+    } else {
+        document.querySelector('.cat-item[data-category="all"]').classList.add('active');
+        loadVideos();
+    }
+
+    setTimeout(startAutoShine, 1000);
+
+    console.log('🎬 Video Hub Ready - No API Keys in Frontend');
+    console.log('📱 All Firebase calls go through Netlify Functions');
+    console.log('🔒 API keys are securely stored in Netlify Environment Variables');
+</script>
+
+</body>
+</html>

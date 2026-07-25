@@ -1,0 +1,8 @@
+{
+  "name": "video-hub",
+  "version": "1.0.0",
+  "description": "Video Hub with Netlify Functions",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}
