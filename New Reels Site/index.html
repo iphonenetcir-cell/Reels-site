@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Video Hub</title>
     <style>
         * {
@@ -289,11 +289,31 @@
         }
 
         @keyframes textShine {
-            0% { text-shadow: 0 0 5px rgba(255, 204, 0, 0.2); transform: scale(1); color: #888; }
-            25% { text-shadow: 0 0 20px rgba(255, 204, 0, 0.8), 0 0 40px rgba(255, 204, 0, 0.4); transform: scale(1.2); color: #ffcc00; }
-            50% { text-shadow: 0 0 30px rgba(255, 204, 0, 1), 0 0 60px rgba(255, 204, 0, 0.5); transform: scale(1.3); color: #ffdd44; }
-            75% { text-shadow: 0 0 15px rgba(255, 204, 0, 0.5); transform: scale(1.1); color: #ffcc00; }
-            100% { text-shadow: 0 0 5px rgba(255, 204, 0, 0.2); transform: scale(1); color: #888; }
+            0% {
+                text-shadow: 0 0 5px rgba(255, 204, 0, 0.2);
+                transform: scale(1);
+                color: #888;
+            }
+            25% {
+                text-shadow: 0 0 20px rgba(255, 204, 0, 0.8), 0 0 40px rgba(255, 204, 0, 0.4);
+                transform: scale(1.2);
+                color: #ffcc00;
+            }
+            50% {
+                text-shadow: 0 0 30px rgba(255, 204, 0, 1), 0 0 60px rgba(255, 204, 0, 0.5);
+                transform: scale(1.3);
+                color: #ffdd44;
+            }
+            75% {
+                text-shadow: 0 0 15px rgba(255, 204, 0, 0.5);
+                transform: scale(1.1);
+                color: #ffcc00;
+            }
+            100% {
+                text-shadow: 0 0 5px rgba(255, 204, 0, 0.2);
+                transform: scale(1);
+                color: #888;
+            }
         }
 
         .category-menu .cat-item:active {
@@ -755,16 +775,16 @@
 
 <script>
     // ============================================
-    // FRONTEND - NO API KEYS HERE!
-    // All Firebase calls go through Netlify Functions
+    // NO FIREBASE API KEYS HERE!
+    // All data fetched via Netlify Function
     // ============================================
-    
+
+    const API_BASE = '/.netlify/functions';
     const appContainer = document.getElementById('app');
+
     let currentCategory = 'all';
     let allVideos = [];
     let shuffledVideos = [];
-    let shineInterval = null;
-    let shineIndex = 0;
     let currentVideoId = null;
     let isSharedMode = false;
     let sharedVideoId = null;
@@ -774,23 +794,6 @@
     let isVideoEnded = false;
     let refreshCheckInterval = null;
     let isLongVideo = false;
-
-    // ============================================
-    // API CALLS TO NETLIFY FUNCTIONS
-    // ============================================
-    const API_BASE = '/.netlify/functions';
-
-    async function fetchVideosFromAPI() {
-        try {
-            const response = await fetch(`${API_BASE}/getVideos`);
-            if (!response.ok) throw new Error('Failed to fetch videos');
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            console.error('Error fetching videos:', error);
-            return [];
-        }
-    }
 
     // ============================================
     // AD CLOSE
@@ -805,6 +808,21 @@
         }
     }
     window.closeAd = closeAd;
+
+    // ============================================
+    // FETCH VIDEOS FROM NETLIFY FUNCTION
+    // ============================================
+    async function fetchVideosFromAPI() {
+        try {
+            const response = await fetch(`${API_BASE}/getVideos`);
+            if (!response.ok) throw new Error('Failed to fetch videos');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching videos:', error);
+            return [];
+        }
+    }
 
     // ============================================
     // SHUFFLE ARRAY
@@ -1311,6 +1329,9 @@
     // ============================================
     // AUTO SHINE
     // ============================================
+    let shineInterval = null;
+    let shineIndex = 0;
+
     function startAutoShine() {
         clearInterval(shineInterval);
         shineIndex = 0;
@@ -1523,12 +1544,9 @@
     // SCROLL CONTROL
     // ============================================
     const app = document.getElementById('app');
-    let scrollTimeout = null;
 
     if (app) {
-        app.addEventListener('scroll', function() {
-            clearTimeout(scrollTimeout);
-        }, { passive: true });
+        app.addEventListener('scroll', function() {}, { passive: true });
 
         let scrollSnapTimer = null;
         app.addEventListener('scroll', function() {
@@ -1560,7 +1578,6 @@
     const hasShared = checkSharedVideo();
     
     if (hasShared) {
-        // First load all videos, then find shared one
         fetchVideosFromAPI().then(videos => {
             allVideos = videos;
             const sharedVideo = allVideos.find(v => v.uniqueId === sharedVideoId);
@@ -1602,9 +1619,9 @@
 
     setTimeout(startAutoShine, 1000);
 
-    console.log('🎬 Video Hub Ready - No API Keys in Frontend');
-    console.log('📱 All Firebase calls go through Netlify Functions');
-    console.log('🔒 API keys are securely stored in Netlify Environment Variables');
+    console.log('🎬 Video Hub Ready - API Keys Hidden in Backend');
+    console.log('📱 All data fetched via Netlify Functions');
+    console.log('🔒 Firebase API keys are secure in backend');
 </script>
 
 </body>
