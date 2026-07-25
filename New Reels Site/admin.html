@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Video Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: #0a0a0a;
+            padding: 20px;
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffcc00;
+            font-size: 28px;
+        }
+        .box {
+            background: #1a1a1a;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2a2a;
+        }
+        .box h2 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #aaa;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background: #2a2a2a;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #ffcc00;
+        }
+        select option {
+            background: #2a2a2a;
+            color: white;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #ffcc00;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #111;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .card {
+            background: #1a1a1a;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #ffcc00;
+            border: 1px solid #2a2a2a;
+            border-left-width: 4px;
+        }
+        .card .category-tag {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: #ffcc00;
+            color: #111;
+        }
+        .card video {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            margin-top: 12px;
+            border-radius: 10px;
+            background: #000;
+        }
+        .card .video-info h3 {
+            color: #ffcc00;
+            margin-bottom: 6px;
+            font-size: 18px;
+        }
+        .card .video-info p {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .card .video-info .meta {
+            color: #666;
+            font-size: 12px;
+        }
+        .btn-delete {
+            background: #ff3b30;
+            margin-top: 12px;
+            color: white;
+            padding: 12px;
+            font-size: 15px;
+        }
+        .btn-delete:hover {
+            background: #d32f2f;
+        }
+        .btn-copy {
+            background: #444;
+            color: white;
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 14px;
+        }
+        .btn-copy:hover {
+            background: #555;
+        }
+        .tab-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-bar button {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            background: #2a2a2a;
+            color: #aaa;
+            border-radius: 10px;
+            min-width: 60px;
+            border: 1px solid transparent;
+        }
+        .tab-bar button.active {
+            background: #ffcc00;
+            color: #111;
+            border-color: #ffcc00;
+        }
+        .tab-bar button:hover {
+            border-color: #ffcc00;
+        }
+        .hide {
+            display: none !important;
+        }
+        .stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .stats span {
+            background: #2a2a2a;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid #333;
+        }
+        .stats span strong {
+            color: #ffcc00;
+        }
+        .auth-box {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid #2a2a2a;
+        }
+        .auth-box h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ffcc00;
+        }
+        .auth-box input {
+            margin-bottom: 12px;
+        }
+        .auth-box .btn-secondary {
+            background: #333;
+            color: white;
+            margin-top: 10px;
+        }
+        .auth-box .btn-secondary:hover {
+            background: #444;
+        }
+        .logout-btn {
+            background: #ff3b30;
+            color: white;
+            margin-bottom: 15px;
+            padding: 12px;
+            font-size: 15px;
+        }
+        .logout-btn:hover {
+            background: #d32f2f;
+        }
+        .success-msg {
+            background: #1e7e34;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+        }
+        .error-msg {
+            background: #c62828;
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+        }
+        .unique-id-box {
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            color: #ffcc00;
+            word-break: break-all;
+            border: 1px solid #333;
+        }
+        .unique-id-box a {
+            color: #4fc3f7;
+            text-decoration: none;
+        }
+        .unique-id-box a:hover {
+            text-decoration: underline;
+        }
+        .status-msg {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+        }
+        .status-msg.success {
+            background: #1e7e34;
+            color: white;
+            display: block;
+        }
+        .status-msg.error {
+            background: #c62828;
+            color: white;
+            display: block;
+        }
+        .status-msg.info {
+            background: #0d47a1;
+            color: white;
+            display: block;
+        }
+        .footer-text {
+            text-align: center;
+            color: #444;
+            margin-top: 30px;
+            font-size: 12px;
+        }
+        .video-count {
+            display: inline-block;
+            background: #ffcc00;
+            color: #111;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .box { padding: 15px; }
+            .auth-box { padding: 20px; }
+            .stats span { font-size: 11px; padding: 6px 12px; }
+            .tab-bar button { font-size: 12px; padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔥 ADMIN PANEL</h1>
+
+    <!-- AUTH SECTION -->
+    <div class="auth-box" id="authBox">
+        <h2>🔐 LOGIN / SIGNUP</h2>
+        <div id="authStatus" class="status-msg"></div>
+        <input type="email" id="email" placeholder="📧 Email address">
+        <input type="password" id="password" placeholder="🔑 Password (min 6 chars)">
+        <button onclick="signup()">📝 SIGN UP</button>
+        <button class="btn-secondary" onclick="login()">🔓 LOGIN</button>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminPanel" class="hide">
+
+        <!-- Logout -->
+        <button class="logout-btn" onclick="logout()">🚪 LOGOUT</button>
+
+        <!-- Status Message -->
+        <div id="statusMsg" class="status-msg"></div>
+
+        <!-- Category Tabs -->
+        <div class="tab-bar">
+            <button class="active" onclick="filterVideos('all')">📱 All</button>
+            <button onclick="filterVideos('headlines')">📰 Headlines</button>
+            <button onclick="filterVideos('entertainment')">🎭 Entertainment</button>
+            <button onclick="filterVideos('sports')">⚽ Sports</button>
+            <button onclick="filterVideos('reels')">🎬 Reels</button>
+        </div>
+
+        <!-- Add Video Form -->
+        <div class="box">
+            <h2>📤 ADD NEW VIDEO</h2>
+            <select id="category">
+                <option value="headlines">📰 Headlines</option>
+                <option value="entertainment">🎭 Entertainment</option>
+                <option value="sports">⚽ Sports</option>
+                <option value="reels">🎬 Reels</option>
+            </select>
+
+            <input type="text" id="title" placeholder="📝 Title / Headline">
+            <input type="text" id="keywords" placeholder="🔑 Keywords (comma separated)">
+            <input type="text" id="url" placeholder="🎬 Video URL (MP4 or direct link)">
+            <textarea id="description" placeholder="📄 Full Description (optional)" rows="3"></textarea>
+
+            <div id="uniqueIdBox" class="unique-id-box" style="display:none;"></div>
+
+            <div id="successMsg" class="success-msg">✅ Video Saved Successfully!</div>
+            <div id="errorMsg" class="error-msg">❌ Error saving video!</div>
+
+            <button onclick="saveVideo()">💾 SAVE VIDEO</button>
+        </div>
+
+        <!-- Video List -->
+        <div id="videos"></div>
+    </div>
+
+    <div class="footer-text">🔒 Admin Panel v2.0 • Secure • Fast</div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+    // ============================================
+    // FIREBASE CONFIG - YOUR KEYS
+    // ============================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyBN8R-RUH05fmXqp_Vum9WeAa918WEgeyQ",
+        authDomain: "new-reels-site.firebaseapp.com",
+        projectId: "new-reels-site",
+        storageBucket: "new-reels-site.firebasestorage.app",
+        messagingSenderId: "913298453674",
+        appId: "1:913298453674:web:c3083e0743417ebebe8cd3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    let currentFilter = 'all';
+    let allVideos = [];
+
+    // ============================================
+    // AUTH FUNCTIONS
+    // ============================================
+
+    function showAuthStatus(msg, type) {
+        const el = document.getElementById('authStatus');
+        el.textContent = msg;
+        el.className = 'status-msg ' + type;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    function signup() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            showAuthStatus('⚠️ Please enter email and password', 'error');
+            return;
+        }
+        if (password.length < 6) {
+            showAuthStatus('⚠️ Password must be at least 6 characters', 'error');
+            return;
+        }
+
+        auth.createUserWithEmailAndPassword(email, password)
+            .then(() => {
+                showAuthStatus('✅ Account created! Please login.', 'success');
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+            })
+            .catch((error) => showAuthStatus('❌ ' + error.message, 'error'));
+    }
+
+    function login() {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            showAuthStatus('⚠️ Please enter email and password', 'error');
+            return;
+        }
+
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => {
+                showAuthStatus('✅ Login successful!', 'success');
+            })
+            .catch((error) => showAuthStatus('❌ ' + error.message, 'error'));
+    }
+
+    function logout() {
+        auth.signOut();
+        document.getElementById('authBox').classList.remove('hide');
+        document.getElementById('adminPanel').classList.add('hide');
+        document.getElementById('videos').innerHTML = '';
+        showAuthStatus('✅ Logged out', 'info');
+    }
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            document.getElementById('authBox').classList.add('hide');
+            document.getElementById('adminPanel').classList.remove('hide');
+            loadVideos();
+        } else {
+            document.getElementById('authBox').classList.remove('hide');
+            document.getElementById('adminPanel').classList.add('hide');
+        }
+    });
+
+    // ============================================
+    // VIDEO CRUD FUNCTIONS
+    // ============================================
+
+    function showStatus(msg, type) {
+        const el = document.getElementById('statusMsg');
+        el.textContent = msg;
+        el.className = 'status-msg ' + type;
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    function generateUniqueId(title) {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const year = now.getFullYear();
+        const random = Math.floor(Math.random() * 10000);
+        const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 30);
+        return `${month}${day}${year}-${cleanTitle}-${random}`;
+    }
+
+    function saveVideo() {
+        const category = document.getElementById('category').value;
+        const title = document.getElementById('title').value.trim();
+        const keywords = document.getElementById('keywords').value.trim();
+        const url = document.getElementById('url').value.trim();
+        const description = document.getElementById('description').value.trim();
+
+        document.getElementById('successMsg').style.display = 'none';
+        document.getElementById('errorMsg').style.display = 'none';
+
+        if (!title) {
+            showStatus('⚠️ Please enter Title', 'error');
+            return;
+        }
+        if (!url) {
+            showStatus('⚠️ Please enter Video URL', 'error');
+            return;
+        }
+        if (!auth.currentUser) {
+            showStatus('⚠️ Please login first', 'error');
+            return;
+        }
+
+        const uniqueId = generateUniqueId(title);
+
+        const videoData = {
+            category: category,
+            title: title,
+            keywords: keywords || '',
+            url: url,
+            description: description || '',
+            uniqueId: uniqueId,
+            createdAt: Date.now()
+        };
+
+        db.ref('videos').push(videoData)
+            .then(() => {
+                document.getElementById('successMsg').style.display = 'block';
+                document.getElementById('successMsg').textContent = '✅ Video Saved Successfully!';
+
+                const domain = window.location.origin;
+                const shareUrl = `${domain}/?video=${uniqueId}`;
+                const uniqueIdBox = document.getElementById('uniqueIdBox');
+                uniqueIdBox.style.display = 'block';
+                uniqueIdBox.innerHTML = `
+                    🔗 Share Link: <br>
+                    <a href="${shareUrl}" target="_blank">${shareUrl}</a>
+                    <br><br>
+                    <button onclick="copyToClipboard('${shareUrl}')" style="padding:8px 20px; background:#444; color:white; border:none; border-radius:5px; cursor:pointer; width:auto;">
+                        📋 Copy Link
+                    </button>
+                `;
+
+                document.getElementById('title').value = '';
+                document.getElementById('keywords').value = '';
+                document.getElementById('url').value = '';
+                document.getElementById('description').value = '';
+                showStatus('✅ Video added successfully!', 'success');
+
+                setTimeout(() => {
+                    document.getElementById('successMsg').style.display = 'none';
+                }, 5000);
+            })
+            .catch((error) => {
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorMsg').textContent = '❌ Error: ' + error.message;
+                showStatus('❌ ' + error.message, 'error');
+            });
+    }
+
+    function copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+                .then(() => showStatus('✅ Link copied to clipboard!', 'success'))
+                .catch(() => fallbackCopy(text));
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const input = document.createElement('input');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showStatus('✅ Link copied to clipboard!', 'success');
+    }
+
+    function loadVideos() {
+        const videosDiv = document.getElementById('videos');
+        db.ref('videos').orderByChild('createdAt').on('value', (snapshot) => {
+            videosDiv.innerHTML = '';
+            allVideos = [];
+            snapshot.forEach((child) => {
+                const data = child.val();
+                const key = child.key;
+                allVideos.push({ key, ...data });
+            });
+            allVideos.reverse();
+            renderVideos(currentFilter);
+        });
+    }
+
+    function renderVideos(filter) {
+        const videosDiv = document.getElementById('videos');
+        videosDiv.innerHTML = '';
+
+        const filtered = filter === 'all' ? allVideos : allVideos.filter(v => v.category === filter);
+
+        if (filtered.length === 0) {
+            videosDiv.innerHTML = `<div style="text-align:center; color:#666; padding:40px;"><p>📭 No videos in this category</p></div>`;
+            return;
+        }
+
+        const total = allVideos.length;
+        const headlinesCount = allVideos.filter(v => v.category === 'headlines').length;
+        const entertainmentCount = allVideos.filter(v => v.category === 'entertainment').length;
+        const sportsCount = allVideos.filter(v => v.category === 'sports').length;
+        const reelsCount = allVideos.filter(v => v.category === 'reels').length;
+
+        let html = `
+            <div class="stats">
+                <span>📊 Total: <strong>${total}</strong></span>
+                <span>📰 Headlines: <strong>${headlinesCount}</strong></span>
+                <span>🎭 Entertainment: <strong>${entertainmentCount}</strong></span>
+                <span>⚽ Sports: <strong>${sportsCount}</strong></span>
+                <span>🎬 Reels: <strong>${reelsCount}</strong></span>
+            </div>
+        `;
+
+        filtered.forEach((data) => {
+            const categoryEmoji = data.category === 'headlines' ? '📰' :
+                                 data.category === 'entertainment' ? '🎭' :
+                                 data.category === 'sports' ? '⚽' : '🎬';
+            const categoryName = data.category.charAt(0).toUpperCase() + data.category.slice(1);
+
+            const domain = window.location.origin;
+            const shareUrl = `${domain}/?video=${data.uniqueId}`;
+
+            html += `
+                <div class="card">
+                    <span class="category-tag">${categoryEmoji} ${categoryName}</span>
+                    <div class="video-info">
+                        <h3>${escapeHTML(data.title)}</h3>
+                        ${data.keywords ? `<p>🔑 ${escapeHTML(data.keywords)}</p>` : ''}
+                        ${data.description ? `<p>📝 ${escapeHTML(data.description)}</p>` : ''}
+                        <p class="meta">🆔 ${data.uniqueId}</p>
+                        <p class="meta">🔗 ${shareUrl}</p>
+                    </div>
+                    <video src="${data.url}" controls preload="metadata"></video>
+                    <button class="btn-copy" onclick="copyToClipboard('${shareUrl}')">📋 Copy Share Link</button>
+                    <button class="btn-delete" onclick="deleteVideo('${data.key}')">🗑️ DELETE</button>
+                </div>
+            `;
+        });
+
+        videosDiv.innerHTML = html;
+    }
+
+    function filterVideos(category) {
+        currentFilter = category;
+        document.querySelectorAll('.tab-bar button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-bar button').forEach(btn => {
+            const text = btn.textContent.trim();
+            if (category === 'all' && text.includes('All')) btn.classList.add('active');
+            else if (category === 'headlines' && text.includes('Headlines')) btn.classList.add('active');
+            else if (category === 'entertainment' && text.includes('Entertainment')) btn.classList.add('active');
+            else if (category === 'sports' && text.includes('Sports')) btn.classList.add('active');
+            else if (category === 'reels' && text.includes('Reels')) btn.classList.add('active');
+        });
+        renderVideos(category);
+    }
+
+    function deleteVideo(key) {
+        if (confirm('🗑️ Delete this video permanently?')) {
+            db.ref('videos/' + key).remove()
+                .then(() => {
+                    showStatus('✅ Video deleted successfully!', 'success');
+                    loadVideos();
+                })
+                .catch((error) => showStatus('❌ ' + error.message, 'error'));
+        }
+    }
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            if (m === '"') return '&quot;';
+            return m;
+        });
+    }
+
+    console.log('🔥 Admin Panel Ready');
+    console.log('📹 Use this to add/manage videos');
+    console.log('🔒 Firebase connected');
+</script>
+
+</body>
+</html>
